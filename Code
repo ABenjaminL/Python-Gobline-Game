@@ -1,0 +1,1444 @@
+#!/usr/bin/python2.7
+
+#00 - Imports##
+import random
+import math
+import string
+import time
+import sys
+import pickle
+
+#01 - LORE NOTES##
+"""Anastasiya is sick of heroes breaking into her and her friends homes so she summons her own skeletal warrior to combat the heroes.
+
+Combat is based on class system. A musical class would have a rhythm mini game for combat. Warrior would have classic RPG. Rogue could have
+slicing game like Severed. And a speaking class would -Kill with Kindess- where a bunch of words or phrases float around the screen and you have to
+click the kind word/phrase before time runs out."""
+
+
+#02 - Text printing set up##
+
+  #02.1 - Text to ask for player input
+def player_input_text(text):
+  for l in text:
+    sys.stdout.write(l)
+    sys.stdout.flush()
+    time.sleep(0)
+
+  #02.2 - Console Text Set Up
+def narrative_text(text):
+    for l in text:
+        sys.stdout.write(l)
+        sys.stdout.flush()
+        time.sleep(.03)
+
+def battle_text(text):
+    for l in text:
+        sys.stdout.write(l)
+        sys.stdout.flush()
+        time.sleep(.01)
+
+def instant_text(text):
+    for l in text:
+        sys.stdout.write(l)
+        sys.stdout.flush()
+        time.sleep(.001)
+
+def fast_text(text):
+    for l in text:
+        sys.stdout.write(l)
+        sys.stdout.flush()
+        time.sleep(.05)
+
+def med_text(text):
+    for l in text:
+        sys.stdout.write(l)
+        sys.stdout.flush()
+        time.sleep(.2)
+
+def slow_text(text):
+    for l in text:
+        sys.stdout.write(l)
+        sys.stdout.flush()
+        time.sleep(.4)
+
+  #02.3 - NPC Dialogue Text Set Up
+
+    #02.3-1 - Blank Name for Console Reads Between Dialogue
+def blank_filler_text(text):
+    npc_name_dialogue(" -- -- ")
+    for l in text:
+      sys.stdout.write(l)
+      sys.stdout.flush()
+      time.sleep(.035)
+
+    #02.3-2 - Call This Each Time An NPC's Name is Listed
+def npc_name_dialogue(text):
+    for l in text:
+        sys.stdout.write(l)
+        sys.stdout.flush()
+        time.sleep(0)
+
+    #02.4-1 - Anastasiya - Necromancer who raises player - https://www.dcode.fr/russian-accent for speech
+def anastasiya_text(text):
+  npc_name_dialogue("Anastasiya: ")
+  for l in text:
+    sys.stdout.write(l)
+    sys.stdout.flush()
+    time.sleep(.04)
+
+
+
+    #02.4-2 - Antosha - Merchant
+def antosha_text(text):
+  npc_name_dialogue("Antosha: ")
+  for l in text:
+    sys.stdout.write(l)
+    sys.stdout.flush()
+    time.sleep(.045)
+
+    #02.4-3 - Einhar - arena clerk - Golem
+def einhar_text(text):
+  npc_name_dialogue("Einhar: ")
+  for l in text:
+    sys.stdout.write(l)
+    sys.stdout.flush()
+    time.sleep(.037)
+
+
+  ####Text Dynamics##
+    #######Delay text Function
+def time_pause(pause_time):
+  time.sleep(pause_time)
+short_pause = (0.5)
+med_pause = (0.8)
+long_pause = (1)
+extra_long_pause = (1.5)
+
+#03 - World State##
+
+  ####Locations
+class Arena(object):
+  def __init__(self, arena_first_visit, in_arena):
+    self.arena_first_visit = arena_first_visit
+    self.in_arena = in_arena
+
+arena = Arena(True, False)
+
+class Hub(object):
+  def __init__(self, at_hub):
+    self.at_hub = at_hub
+
+first_time_hub = True
+
+hub = Hub(False)
+
+
+
+
+  #########Battle Checks########
+class Check_battle(object):
+  def __init__(self, fight):
+    self.fight = fight
+check_battle = Check_battle(False)
+
+def tier2_monster_select(monster1,monster2):
+  choice = random.randrange(1,3)
+  if choice == 1:
+    return monster1
+  else:
+    return monster2
+
+def tier3_monster_select(monster1,monster2):
+  choice = random.randrange(1,3)
+  if choice == 1:
+    return monster1
+  else:
+    return monster2
+
+#04 - Player set up##
+
+  ####Weapons
+fists = (2,4)
+swords = (1,5)
+lighter = (1,4)
+
+  #####Player Stats
+class Player_traits(object):
+  def __init__(self, horns, teeth, height, bone_color):
+    self.horns = horns
+    self.teeth = teeth
+    self.height = height
+    self.bone_color = bone_color
+
+player_traits = Player_traits("straight long", "many sharp", "5", "dull white")
+
+class Player(object):
+  def __init__(self, name, char_class, level, exp, exp_threshold, exp_bonus, kill_count, kill_count_bonus, weapon_name, weapon_damage, max_toughness, toughness, attack, speed, luck):
+    self.name = name
+    self.char_class = char_class
+    self.level = level
+    self.exp = exp
+    self.exp_threshold = exp_threshold
+    self.exp_bonus = exp_bonus
+    self.kill_count = kill_count
+    self.kill_count_bonus = kill_count_bonus
+    self.weapon_name = weapon_name
+    self.weapon_damage = weapon_damage
+    self.max_toughness = max_toughness
+    self.toughness = toughness
+    self.attack = attack
+    self.speed = speed
+    self.luck = luck
+
+
+player = Player("Main Character", "None", 1, 0, 10, 1, 0, 0, "fists", fists, 10, 10, 1, 0, 1)
+
+
+class Player_checks(object):
+  def __init__(self, name_selected, blocking):
+    self.name_selected = name_selected
+    self.blocking = blocking
+
+player_checks = Player_checks(False, False)
+
+
+
+  ########Narrative for new class########
+
+  ####Player Level Up
+def level_up(player):
+  narrative_text("Level " + str(player.level) + "!" + "\n")
+  battle_text("Please select which stat to increase." + "\n")
+  battle_text ("(1 = Toughness, 2 = Attack, 3 = Speed, 4 = Luck)" + "\n")
+  player_input_text("ENTER YOUR CHOICE: ")
+  choice = string.lower(raw_input())
+  stat_increase = random.randrange(1, player.level)
+  if choice == "toughness" or choice == "1":
+    toughness_increase = int(math.ceil(stat_increase * 1.5))
+    player.toughness += toughness_increase
+    player.max_toughness += toughness_increase
+    battle_text("Toughness has increased by " + str(toughness_increase) + "!")
+  elif choice == "attack" or choice == "2":
+    player.attack += stat_increase
+    battle_text("Attack has increased by " + str(stat_increase) + "!")
+  elif choice == "speed" or choice == "3":
+    player.speed += stat_increase
+    battle_text("Speed has increased by " + str(stat_increase) + "!")
+  #elif choice == "Wisdom":
+    #player.wisdom += stat_increase
+    #battle_text("Wisdom has increased by " + str(stat_increase) + "!")
+  elif choice == "Luck" or choice == "4":
+    player.luck += stat_increase
+    battle_text("Luck has increased by " + str(stat_increase) + "!")
+  else:
+    narrative_text("You must select a stat to increase!" + "\n" + "\n")
+    level_up(player)
+  player.toughness = player.max_toughness
+  print ("\n" + "\n")
+
+  time_pause(short_pause)
+  if player.exp >= player.exp_threshold:
+    battle_text("Level Up!" + "\n")
+    time_pause(short_pause)
+    player.exp_threshold *= 1.75
+    #delete later
+    print "Threshold = " + str(player.exp_threshold)
+    time_pause(short_pause)
+    player.level += 1
+    level_up(player)
+
+
+def recite_appearance(player_traits):
+  print "You have " + player_traits.horns + " horns."
+  print "You have " + player_traits.teeth + " teeth."
+  print "You stand at " + player_traits.height + " tall."
+  print "Your bones are " + player_traits.bone_color
+
+def recite_stats(player):
+  print "Level " + str(player.level)
+  print "Toughness = " + str(player.toughness)
+  print "Attack = " + str(player.attack)
+  print "Speed = " + str(player.speed)
+  print "Luck = " + str(player.luck)
+  print "Exp = " + str(player.exp)
+  print "Exp needed for next level = " + str(int(math.ceil(player.exp_threshold)))
+
+#05 - Monster set up
+class Monster(object):
+  def __init__(self, name, toughness, max_toughness, attack, speed, luck, exp, kill_count_points):
+    self.name = name
+    self.toughness = toughness
+    self.max_toughness = max_toughness
+    self.attack = attack
+    self.speed = speed
+    self.luck = luck
+    self.exp = exp
+    self.kill_count_points = kill_count_points
+
+  def reset(self):
+    self.toughness = self.max_toughness
+
+  ########Tutorial Monster########
+puppet = Monster("Puppet", 6, 6, (0,2), -2, 0, 0, 0)
+
+  ########Tier1########
+slime = Monster("Slime", 10, 10, (1,3), -2, 1, 5, 1)
+
+  ########Tier2########
+giant_slime = Monster("Giant Slime", 15, 15, (1,7), 0, 1, 10, 2.3)
+
+skeleton = Monster("Skeleton", 13, 13, (2,6), 2, 1, 10, 2.5)
+
+  ########Tier3########
+goblin = Monster("Goblin", 20, 20, (4,13), 3, 1.5, 20, 4)
+
+zombie = Monster("Zombie", 28, 28, (3,9), 2, 1, 23, 3.8)
+
+#06 - Combat Functions
+
+  #####Combat Implicit Abilities
+def critical_hit(luck):
+  return (luck / 10) + 2
+
+  ########Block set up########
+def player_block(monster, player):
+  player_checks.blocking = True
+  battle_text("You ready your " + player.weapon_name + " to block the attack!" + "\n" + "\n")
+  time_pause(short_pause)
+
+  ########Player Attack#########
+def player_attack(monster, player):
+  hit = random.randrange(1,21)
+  hit_with_bonus = random.randrange(1,21) + player.speed
+  monster_dodge = random.randrange(1,21) + monster.speed
+  battle_text("You attack with your " + str(player.weapon_name) + "!" + "\n")
+  time_pause(med_pause)
+    ########Check Crit Chance########
+  if hit + player.luck >= 20:
+    attack = (random.randrange(*player.weapon_damage) + player.attack) * critical_hit(player.luck)
+    print "Crit!"
+    time_pause(short_pause)
+    ########Check Miss########
+  elif hit_with_bonus < monster_dodge:
+    #battle_text("You rolled a "+ str(hit_with_bonus) + "\n")
+    #battle_text(monster.name + " rolled a "+ str(monster_dodge) + "\n")
+    attack = 0
+    print "Miss!"
+    time_pause(short_pause)
+    ########Damage########
+  else:
+    attack = random.randrange(*player.weapon_damage) + player.attack
+    print "Hit!"
+    time_pause(short_pause)
+  return int(math.floor(attack))
+
+
+def monster_attack(monster, player):
+  hit = random.randrange(1,21)
+  hit_with_bonus = random.randrange(1,21) + monster.speed
+  player_dodge = random.randrange(1,21) + player.speed
+  battle_text("The " + monster.name + " winds up for an attack!" + "\n")
+  time_pause(med_pause)
+########Check if player blocks########
+  ########Monster attack w/ block########
+  if player_checks.blocking:
+    player_checks.blocking = False
+    block = (random.randrange(*player.weapon_damage) + player.attack) + 1
+    ########Check Crit Chance########
+    if hit + monster.luck >= 20:
+      attack = (random.randrange(*monster.attack) * critical_hit(monster.luck))
+      print "Crit!"
+      time_pause(short_pause)
+    ########Check Miss########
+    elif hit_with_bonus < player_dodge:
+      attack = 0
+      print "Miss!"
+      time_pause(short_pause)
+    ########Damage########
+    else:
+      attack = random.randrange(*monster.attack)
+      print "Hit!"
+      time_pause(short_pause)
+      ########Re-assign the monsters damage as "blocked_attack"########
+    blocked_attack = int(math.floor(attack - block))
+    if attack > 0:
+      if blocked_attack > 0:
+        battle_text("You blocked " + str(block) + " damage!" + "\n")
+        time_pause(short_pause)
+        return blocked_attack
+      else:
+        battle_text("You parried the attack!" + "\n")
+        time_pause(short_pause)
+        return 0
+    else:
+      return 0
+
+########Monster attack w/o block
+  ########Check Crit Chance########
+  if hit + monster.luck >= 20:
+    attack = random.randrange(*monster.attack) * critical_hit(monster.luck)
+    print "Crit!"
+    time_pause(short_pause)
+########Check Miss########
+  elif hit_with_bonus < player_dodge:
+    attack = 0
+    print "Miss!"
+    time_pause(short_pause)
+########Damage########
+  else:
+    attack = random.randrange(*monster.attack)
+    print "Hit!"
+    time_pause(short_pause)
+  return int(math.floor(attack))
+
+
+
+########Battle set up#########
+def player_action(monster,player):
+  battle_text("What do you do?" + "\n")
+  time_pause(short_pause)
+  print "(1 = Attack, 2 = Block, 4 = Flee)"
+  player_input_text("ENTER YOUR CHOICE: ")
+  choice = raw_input()
+  if string.lower(choice) == "attack" or choice == "1":
+    attack = player_attack(monster,player)
+    monster.toughness -= attack
+    battle_text("You did " + str(attack) + " damage!" + "\n")
+    time_pause(short_pause)
+
+    if monster.toughness >= 1:
+      battle_text("The " + monster.name + " has " + str(monster.toughness) + " out of " + str(monster.max_toughness) + " toughness remaining." + "\n" + "\n")
+      time_pause(med_pause)
+    else:
+      battle_text("The " + monster.name + " has 0 toughness remaining." + "\n" + "\n")
+      time_pause(med_pause)
+  elif string.lower(choice) == "block" or choice == "2":
+    player_block(monster,player)
+    time_pause(short_pause)
+  elif string.lower(choice) == "flee" or choice == "4":
+    escape_chance = random.randrange(1,5) + player.speed
+    if escape_chance > monster.speed:
+      battle_text("Your escape is successful!" + "\n" + "\n")
+      time_pause(short_pause)
+      check_battle.fight = False
+    else:
+      battle_text("The " + monster.name + " cuts off your escape route!" + "\n" + "\n")
+      time_pause(short_pause)
+  else:
+    battle_text("You must choose an action!" + "\n" + "\n")
+    time_pause(short_pause)
+    player_action(monster,player)
+
+###Start First Fight Definitions
+def first_combat(monster,player):
+  blank_filler_text("Anastasiya rises and grabs something from her bag")
+  med_text("..." + "\n")
+  time_pause(long_pause)
+  blank_filler_text("Its a wooden " + monster.name + "!" + "\n")
+  time_pause(med_pause)
+  anastasiya_text("Now." + "\n")
+  time_pause(med_pause)
+  anastasiya_text("Show me what you can do!" + "\n")
+  time_pause(med_pause)
+  blank_filler_text("She plops the " + monster.name + " down before you." + "\n")
+  time_pause(short_pause)
+  blank_filler_text("You stand and ready your skeletal fists!" + "\n" + "\n")
+  time_pause(med_pause)
+
+  battle_text("You currently have " + str(player.toughness) + " out of " + str(player.max_toughness) + " toughness." + "\n")
+  time_pause(short_pause)
+  battle_text("The " + monster.name + " has " + str(monster.toughness) + " out of " + str(monster.max_toughness) + " toughness." + "\n" + "\n")
+  time_pause(short_pause)
+
+    ########Battle Condition########
+  while player.toughness >= 1 and monster.toughness >= 1:
+    if check_battle.fight:
+
+    ########Player's turn########
+      if player.toughness >= 1 and check_battle.fight:
+        battle_text("Player's Turn!" + "\n")
+        time_pause(med_pause)
+
+      ########Player's Choices########
+        first_fight_player_action(monster,player)
+      else:
+        time_pause(short_pause)
+        print "\n"
+        anastasiya_text("Well, that's niet good!" + "\n")
+        time_pause(short_pause)
+        anastasiya_text("Here!" + "\n")
+        time_pause(short_pause)
+        blank_filler_text("You feel a surge of strength!" + "\n")
+        time_pause(short_pause)
+        player.toughness = player.max_toughness
+        blank_filler_text("Toughness restored!" + "\n" + "\n")
+        time_pause(short_pause)
+
+
+    ########Monster's turn########
+      if monster.toughness >= 1 and check_battle.fight:
+        battle_text(monster.name + "'s Turn!" + "\n")
+        time_pause(med_pause)
+        attack = monster_attack(monster,player)
+        player.toughness -= attack
+        battle_text(monster.name + " did " + str(attack) + " damage!" + "\n"  + "\n")
+        time_pause(short_pause)
+        if player.toughness >= 1:
+          battle_text("You have " + str(player.toughness) + " out of " + str(player.max_toughness) + " toughness remaining." + "\n" + "\n")
+          time_pause(med_pause)
+        else:
+          time_pause(short_pause)
+          anastasiya_text("Well, zat's niet good!" + "\n")
+          time_pause(short_pause)
+          anastasiya_text("Herrre!" + "\n")
+          time_pause(short_pause)
+          blank_filler_text("You feel a surge of strength!" + "\n")
+          time_pause(short_pause)
+          player.toughness = player.max_toughness
+          blank_filler_text("Toughness restored!" + "\n" + "\n")
+          time_pause(short_pause)
+      elif monster.toughness < 1:
+        player.kill_count += 1
+        player.kill_count_bonus += monster.kill_count_points
+        battle_text("You triumphed over the " + monster.name + "!" + "\n")
+        time_pause(short_pause)
+        break
+    else:
+      break
+def first_fight_player_action(monster,player):
+  battle_text("What do you do?" + "\n")
+  time_pause(short_pause)
+  print "(1 = Attack)"
+  player_input_text("ENTER YOUR CHOICE: ")
+  choice = raw_input()
+  if string.lower(choice) == "attack" or choice == "1":
+    attack = player_attack(monster,player)
+    monster.toughness -= attack
+    battle_text("You did " + str(attack) + " damage!" + "\n")
+    time_pause(short_pause)
+
+    if monster.toughness >= 1:
+      battle_text("The " + monster.name + " has " + str(monster.toughness) + " out of " + str(monster.max_toughness) + " toughness remaining." + "\n" + "\n")
+      time_pause(med_pause)
+    else:
+      battle_text("The " + monster.name + " has 0 toughness remaining." + "\n" + "\n")
+      time_pause(med_pause)
+  else:
+    battle_text("You must choose an action!" + "\n" + "\n")
+    time_pause(short_pause)
+    first_fight_player_action(monster,player)
+###End First Fight Definitions
+
+
+def combat(monster,player):
+  battle_text("You've encountered a " + monster.name + "!" + "\n" + "\n")
+  time_pause(med_pause)
+
+  battle_text("You currently have " + str(player.toughness) + " out of " + str(player.max_toughness) + " toughness." + "\n")
+  time_pause(short_pause)
+  battle_text("The " + monster.name + " has " + str(monster.toughness) + " out of " + str(monster.max_toughness) + " toughness." + "\n" + "\n")
+  time_pause(short_pause)
+
+    ########Battle Condition########
+  while player.toughness >= 1 and monster.toughness >= 1:
+    if check_battle.fight:
+
+    ########Player's turn########
+      if player.toughness >= 1 and check_battle.fight:
+        battle_text("Player's Turn!" + "\n")
+        time_pause(med_pause)
+
+      ########Player's Choices########
+        player_action(monster,player)
+      else:
+        battle_text("You are dead!" + "\n")
+        break
+
+
+    ########Monster's turn########
+      if monster.toughness >= 1 and check_battle.fight:
+        battle_text(monster.name + "'s Turn!" + "\n")
+        time_pause(med_pause)
+        attack = monster_attack(monster,player)
+        player.toughness -= attack
+        battle_text(monster.name + " did " + str(attack) + " damage!" + "\n")
+        time_pause(short_pause)
+        if player.toughness >= 1:
+          battle_text("You have " + str(player.toughness) + " out of " + str(player.max_toughness) + " toughness remaining." + "\n" + "\n")
+          time_pause(med_pause)
+        else:
+          battle_text("You have 0 toughness remaining." + "\n" + "\n")
+          time_pause(short_pause)
+          battle_text("You were slain by the " + monster.name + "!" + "\n")
+          break
+      elif monster.toughness < 1:
+        player.kill_count += 1
+        player.kill_count_bonus += monster.kill_count_points
+        battle_text("You killed the " + monster.name + "!" + "\n")
+        time_pause(short_pause)
+        monster_exp_with_bonus = monster.exp * player.exp_bonus
+        player.exp += int(math.ceil(monster_exp_with_bonus))
+        battle_text("You've received " + str(int(math.ceil(monster_exp_with_bonus))) + " experience!" + "\n")
+        time_pause(short_pause)
+        battle_text ("XP = "+ str(player.exp) + "\n" + "\n")
+        time_pause(short_pause)
+        break
+    else:
+      break
+
+
+def post_battle_check(player):
+  if player.toughness <= 0:
+      print "\n"
+      narrative_text("You have fallen." + "\n")
+      player.toughness = player.max_toughness
+      time_pause(med_pause)
+      if player.exp_bonus > 1 and player.exp_bonus * .75 > 1:
+        player.exp_bonus = player.exp_bonus * .75
+        narrative_text("Your exp bonus has been reduced to " + str(player.exp_bonus) + "." + "\n")
+      elif player.exp_bonus > 1:
+        player.exp_bonus = 1
+        narrative_text("Your exp bonus has been reduced to " + str(player.exp_bonus) + "." + "\n")
+      else:
+        narrative_text("Your exp bonus cannot go any lower." + "\n")
+        time_pause(med_pause)
+      ##Blank Screen##
+      print "\n"
+      time_pause(short_pause)
+      print "\n"
+      time_pause(short_pause)
+      print "\n"
+      time_pause(short_pause)
+      print "\n"
+      time_pause(short_pause)
+      print "\n"
+      time_pause(short_pause)
+      print "\n"
+      time_pause(short_pause)
+      print "\n"
+      time_pause(short_pause)
+      print "\n"
+      time_pause(short_pause)
+      print "\n"
+      time_pause(short_pause)
+      print "\n"
+      time_pause(short_pause)
+      print "\n"
+      time_pause(short_pause)
+      return_to_hub(player)
+  else:
+    battle_text("You survived the battle with " + str(player.toughness) + " out of " + str(player.max_toughness) + " toughness remaining." + "\n" + "\n")
+    time_pause(short_pause)
+    if player.exp >= player.exp_threshold:
+      battle_text("Level Up!" + "\n")
+      player.exp_threshold *= 1.75
+      print "Threshold = " + str(player.exp_threshold)
+      player.level += 1
+      level_up(player)
+      time_pause(med_pause)
+
+def first_battle(player, monster):
+  check_battle.fight = True
+  first_combat(monster,player)
+  monster.reset()
+
+def battle(player, monster):
+  check_battle.fight = True
+  combat(monster,player)
+  monster.reset()
+  post_battle_check(player)
+
+#07 - Narrative
+
+  #07.1 Prelude
+
+	  ########Name Select########
+def choosing_a_name(player):
+    npc_name_dialogue("?????: ")
+    for l in "Hah!" + "\n":
+      sys.stdout.write(l)
+      sys.stdout.flush()
+      time.sleep(.05)
+    time_pause(.8)
+    npc_name_dialogue("?????: ")
+    for l in "It worked!" + "\n":
+      sys.stdout.write(l)
+      sys.stdout.flush()
+      time.sleep(.04)
+    time_pause(1)
+    blank_filler_text("A woman is crouched next to you, her face nearly pressed to yours." + "\n")
+    time_pause(1.5)
+    blank_filler_text("Looking past her, you see many crudely cut stones laid upright over a dirt field." + "\n")
+    time_pause(1.5)
+    npc_name_dialogue("?????: ")
+    for l in "It finally worked..." + "\n":
+      sys.stdout.write(l)
+      sys.stdout.flush()
+      time.sleep(.04)
+    time_pause(2)
+    npc_name_dialogue("?????: ")
+    for l in "My friend!" + "\n":
+      sys.stdout.write(l)
+      sys.stdout.flush()
+      time.sleep(.04)
+    time_pause(.5)
+    npc_name_dialogue("?????: ")
+    for l in "Do you remember your name?" + "\n":
+      sys.stdout.write(l)
+      sys.stdout.flush()
+      time.sleep(.04)
+    time_pause(short_pause)
+    print "(MUST BE LESS THAN 15 CHARACTERS)"
+    player_input_text("ENTER YOUR NAME HERE: ")
+    raw_name = raw_input()
+    if raw_name == "":
+      raw_name = "Goblin"
+    first_letter = raw_name[0]
+    proper_name = first_letter.capitalize() + raw_name[1:len(raw_name)]
+    player.name = proper_name
+    if len(player.name) >= 1 and len(player.name) <= 15:
+      npc_name_dialogue("?????: ")
+      for l in "Your name is " + player.name + "?" + "\n":
+        sys.stdout.write(l)
+        sys.stdout.flush()
+        time.sleep(.04)
+      time_pause(short_pause)
+      print "(1 = Yes or 2 = No)"
+      player_input_text("ENTER CHOICE: ")
+      answer = raw_input()
+      if answer == "yes" or answer == "1":
+          pass
+      else:
+        npc_name_dialogue("?????: ")
+        for l in "No?" + "\n":
+          sys.stdout.write(l)
+          sys.stdout.flush()
+          time.sleep(.04)
+        time_pause(short_pause)
+        name_selection_loop(player)
+    elif len(player.name) < 1:
+      npc_name_dialogue("?????: ")
+      for l in "Come now, you must remember your name!" + "\n" + "\n":
+        sys.stdout.write(l)
+        sys.stdout.flush()
+        time.sleep(.04)
+        time_pause(short_pause)
+      npc_name_dialogue("?????: ")
+      for l in "Now then..." + "\n":
+        sys.stdout.write(l)
+        sys.stdout.flush()
+        time.sleep(.04)
+      time_pause(short_pause)
+      name_selection_loop(player)
+    elif len(player.name) > 15:
+      npc_name_dialogue("?????: ")
+      for l in "Oh ho ho, one of your classic jokes?" + "\n":
+        sys.stdout.write(l)
+        sys.stdout.flush()
+        time.sleep(.04)
+      time_pause(med_pause)
+      npc_name_dialogue("?????: ")
+      for l in "But truly my friend..." + "\n":
+        sys.stdout.write(l)
+        sys.stdout.flush()
+        time.sleep(.04)
+      time_pause(short_pause)
+      npc_name_dialogue("?????: ")
+      for l in "Please..." + "\n" + "\n":
+        sys.stdout.write(l)
+        sys.stdout.flush()
+        time.sleep(.04)
+      time_pause(short_pause)
+      name_selection_loop(player)
+
+
+def name_selection_loop(player):
+  while player_checks.name_selected == False:
+    npc_name_dialogue("?????: ")
+    for l in "Do you remember your name?" + "\n":
+      sys.stdout.write(l)
+      sys.stdout.flush()
+      time.sleep(.04)
+    time_pause(short_pause)
+    print "(MUST BE LESS THAN 15 CHARACTERS)"
+    player_input_text("ENTER YOUR NAME HERE: ")
+    raw_name = raw_input()
+    if raw_name == "":
+      raw_name = "Goblin"
+    first_letter = raw_name[0]
+    proper_name = first_letter.capitalize() + raw_name[1:len(raw_name)]
+    player.name = proper_name
+    if len(player.name) >= 1 and len(player.name) <= 15:
+      npc_name_dialogue("?????: ")
+      for l in "So, your name is " + player.name + "?" + "\n":
+        sys.stdout.write(l)
+        sys.stdout.flush()
+        time.sleep(.04)
+      time_pause(short_pause)
+      print "(1 = Yes or 2 = No)"
+      player_input_text("ENTER YOUR CHOICE: ")
+      answer = raw_input()
+      if string.lower(answer) == "yes" or string.lower(answer) == "1":
+        player_checks.name_selected = True
+      else:
+        npc_name_dialogue("?????: ")
+        for l in "No?" + "\n":
+          sys.stdout.write(l)
+          sys.stdout.flush()
+          time.sleep(.04)
+        time_pause(short_pause)
+        name_selection_loop(player)
+
+  ########If no#########
+    elif len(player.name) > 15:
+      npc_name_dialogue("?????: ")
+      for l in "Oh ho ho, one of your classic jokes?" + "\n":
+        sys.stdout.write(l)
+        sys.stdout.flush()
+        time.sleep(.04)
+      time_pause(med_pause)
+      npc_name_dialogue("?????: ")
+      for l in "But truly my friend..." + "\n":
+        sys.stdout.write(l)
+        sys.stdout.flush()
+        time.sleep(.04)
+      time_pause(short_pause)
+      npc_name_dialogue("?????: ")
+      for l in "Please..." + "\n" + "\n":
+        sys.stdout.write(l)
+        sys.stdout.flush()
+        time.sleep(.04)
+      time_pause(short_pause)
+      name_selection_loop(player)
+
+
+########Determine Goblin########
+
+def determine_goblin_q1(player):
+  anastasiya_text ("What type of goblin are you?" + "\n")
+  time_pause(short_pause)
+  battle_text ("(1. Thick skinned! OR 2. Soft but agile!)" + "\n")
+  player_input_text("ENTER YOUR CHOICE: ")
+  answer = raw_input()
+
+  if answer == "1":
+    horn_type = random.randrange(1, 4)
+    if horn_type == 1:
+      player_traits.horns = "two long and sharp"
+    elif horn_type == 2:
+      player_traits.horns = "two long and broken"
+    elif horn_type == 3:
+      player_traits.horns = "two long and crooked"
+    else:
+      player_traits.horns = "two long and crooked"
+  elif answer == "2":
+    soft_horn_type = random.randrange(1,4)
+    if soft_horn_type == 1:
+      player_traits.horns = "two short and pointy"
+    elif soft_horn_type == 2:
+      player_traits.horns = "two short and broken"
+    if soft_horn_type == 3:
+      player_traits.horns = "two long and winding"
+    else:
+      player_traits.horns = "two long and broken"
+  else:
+    anastasiya_text("Please, answer my question." + "\n" + "\n")
+    time_pause(short_pause)
+    determine_goblin_q1(player)
+  time_pause(short_pause)
+
+def determine_goblin_q2(player):
+  anastasiya_text ("If you had to choose, would you rather:" +"\n")
+  time_pause(short_pause)
+  battle_text("(1. Eat only meat! OR 2. Eat only veggies!)" + "\n")
+  player_input_text("ENTER YOUR CHOICE: ")
+  answer = raw_input()
+
+  if answer == "1":
+    meat_teeth = random.randrange(1, 3)
+    if meat_teeth == 1:
+      player_traits.teeth = "many sharp"
+    elif meat_teeth == 2:
+      player_traits.teeth = "a few sharp"
+    else:
+      player_traits.teeth = "error"
+
+  elif answer == "2":
+    veggie_teeth = random.randrange(1, 3)
+    if veggie_teeth == 1:
+      player_traits.teeth = "many dull"
+    elif veggie_teeth == 2:
+      player_traits.teeth = "a few dull"
+    else:
+      player_traits.teeth = "error"
+
+  else:
+    anastasiya_text("Please, answer my question." + "\n" + "\n")
+    time_pause(short_pause)
+    determine_goblin_q2(player)
+  time_pause(short_pause)
+
+def determine_goblin_q3(player):
+  anastasiya_text ("Most often, do strangers:" + "\n")
+  time_pause(short_pause)
+  battle_text("(1. Annoy. OR 2. Entice.)" + "\n")
+  player_input_text("ENTER YOUR CHOICE: ")
+  answer = string.lower(raw_input())
+  if answer == "1" or answer == "2":
+    height_in_feet = random.randrange(3, 5)
+    height_in_inches = random.randrange(0, 12)
+    player_traits.height = str(height_in_feet) + " feet and " + str(height_in_inches) + " inches"
+  else:
+    anastasiya_text("Please, answer my question." + "\n" + "\n")
+    time_pause(short_pause)
+    determine_goblin_q3(player)
+  time_pause(short_pause)
+
+def determine_goblin_q4(player):
+  anastasiya_text ("Are you lucky?" + "\n")
+  time_pause(short_pause)
+  battle_text ("(1 = Very! OR 2 = Not really...)" + "\n")
+  player_input_text("ENTER YOUR CHOICE: ")
+  answer = string.lower(raw_input())
+  luck = random.randrange(1,11)
+  if answer == "yes" and luck > 9 or answer == "1" and luck > 9:
+    player_traits.bone_color = "bright gold!"
+    anastasiya_text ("Well of course you are!" + "\n")
+    time_pause(med_pause)
+    anastasiya_text ("For now I am here." + "\n")
+    time_pause(short_pause)
+    anastasiya_text ("And thus you are back!" + "\n")
+  elif answer == "yes" or answer == "1":
+    anastasiya_text ("Hmm... not lucky enough unfortunately." + "\n")
+    time_pause(long_pause)
+    bone_color = random.randrange(1, 7)
+    if bone_color == 1:
+      player_traits.bone_color = "bright white"
+    if bone_color == 2:
+      player_traits.bone_color = "faded white"
+    if bone_color == 3:
+      player_traits.bone_color = "bright grey"
+    if bone_color == 4:
+      player_traits.bone_color = "faded green"
+    if bone_color == 5:
+      player_traits.bone_color = "earthy brown"
+    if bone_color == 5:
+      player_traits.bone_color = "abyssal black"
+
+  elif answer == "no" or answer == "2":
+    bone_color = random.randrange(1, 5)
+    if bone_color == 1:
+      player_traits.bone_color = "earthy green"
+    if bone_color == 2:
+      player_traits.bone_color = "faded grey"
+    if bone_color == 3:
+      player_traits.bone_color = "charcol black"
+    if bone_color == 4:
+      player_traits.bone_color = "dull white"
+    time_pause(short_pause)
+    anastasiya_text ("Now that's just not true!" + "\n")
+    time_pause(med_pause)
+    anastasiya_text ("You're back aren't you?" + "\n")
+    time_pause(long_pause)
+  else:
+    anastasiya_text("Please, answer my question." + "\n" + "\n")
+    time_pause(short_pause)
+    determine_goblin_q4(player)
+
+def goblin_questions(player):
+  determine_goblin_q1(player)
+  determine_goblin_q2(player)
+  determine_goblin_q3(player)
+  determine_goblin_q4(player)
+
+
+
+  #########Character Creation#########
+
+def character_creation(player):
+  choosing_a_name(player)
+  npc_name_dialogue("?????: ")
+  for l in "Ah!" + "\n":
+    sys.stdout.write(l)
+    sys.stdout.flush()
+    time.sleep(.04)
+  time_pause(short_pause)
+  npc_name_dialogue("?????: ")
+  for l in "I'm so happy you remember your name!" + "\n":
+    sys.stdout.write(l)
+    sys.stdout.flush()
+    time.sleep(.04)
+  time_pause(short_pause)
+
+  npc_name_dialogue("?????: ")
+  for l in "Do you..." + "\n":
+    sys.stdout.write(l)
+    sys.stdout.flush()
+    time.sleep(.04)
+  time_pause(short_pause)
+  npc_name_dialogue("?????: ")
+  for l in "Do you remember who I am?" + "\n":
+    sys.stdout.write(l)
+    sys.stdout.flush()
+    time.sleep(.04)
+  time_pause(short_pause)
+  print "(1 = Yes or 2 = No)"
+  player_input_text("ENTER YOUR CHOICE: ")
+  choice = raw_input()
+  if choice == "1":
+    npc_name_dialogue("?????: ")
+    for l in "You remember?!" + "\n":
+      sys.stdout.write(l)
+      sys.stdout.flush()
+      time.sleep(.04)
+    time_pause(short_pause)
+  elif choice == "2":
+    npc_name_dialogue("?????: ")
+    for l in "You don't remember?!" + "\n":
+      sys.stdout.write(l)
+      sys.stdout.flush()
+      time.sleep(.04)
+    time_pause(short_pause)
+
+  anastasiya_text ("I am your dearest friend Anastasiya of course!" +"\n")
+  time_pause(med_pause)
+  anastasiya_text ("Er..." + "\n")
+  time_pause(med_pause)
+  anastasiya_text ("I was..." + "\n")
+  time_pause(long_pause)
+  instant_text("Anastasiya:")
+  time_pause(med_pause)
+  slow_text(" . . . . . . " + "\n")
+  time_pause(long_pause)
+  anastasiya_text ("Well, let's not dwell on the past my skeletal friend!" + "\n")
+  time_pause(med_pause)
+
+  anastasiya_text ("We must find out, " + player.name + "." +"\n")
+  anastasiya_text ("How much do you remember about yourself?" +"\n" + "\n")
+  time_pause(med_pause)
+  goblin_questions(player)
+  anastasiya_text("One last test, my dear " + player.name + "." + "\n")
+  time_pause(short_pause)
+  first_battle(player, puppet)
+  narrative_text("\n")
+  player.toughness = player.max_toughness
+  time_pause(long_pause)
+  anastasiya_text("Wonderful!" + "\n")
+  time_pause(short_pause)
+  anastasiya_text("Even better than I expected!" + "\n")
+  time_pause(med_pause)
+  anastasiya_text("I'm sure you're confused about what is going on." + "\n")
+  time_pause(med_pause)
+  anastasiya_text("Follow me, " + player.name + "." + "\n")
+  time_pause(short_pause)
+  anastasiya_text("I will explain once we get back to our village." + "\n")
+  time_pause(long_pause)
+  slow_text("    " + "\n" + "\n"+ "\n")
+  return_to_hub(player)
+
+
+  #07.2 - Arena
+def first_time_at_arena():
+  arena.arena_first_visit = False
+  time_pause(long_pause)
+  einhar_text("Well lookie here!" + "\n")
+  time_pause(med_pause)
+  einhar_text("What's your name li'l fella?" + "\n")
+  time_pause(extra_long_pause)
+  einhar_text(player.name + "?" + "\n")
+  time_pause(med_pause)
+  einhar_text("Well..." + "\n")
+  time_pause(long_pause)
+  einhar_text("That's an alright name." + "\n")
+  time_pause(med_pause)
+  einhar_text("I s'pose." + "\n")
+  time_pause(long_pause)
+  einhar_text(".")
+  slow_text(" . . " + "\n")
+  einhar_text("Alright, so look here kiddo." + "\n")
+  time_pause(med_pause)
+  einhar_text("This here's the arena." + "\n")
+  time_pause(med_pause)
+  einhar_text("I uh, hope I don't gotta explain what that is to ya." + "\n")
+  time_pause(med_pause)
+  einhar_text("Come here to fight stuff." + "\n")
+  time_pause(med_pause)
+  einhar_text("Depending on how well you do and how much the audience likes ya." + "\n")
+  time_pause(med_pause)
+  einhar_text("You'll get a buncha different rewards." + "\n")
+  time_pause(long_pause)
+  einhar_text("Seein' as your new here," + "\n")
+  time_pause(med_pause)
+  einhar_text("I highly recomend you start with the tier1 arena." + "\n")
+  time_pause(med_pause)
+  einhar_text("But it's up to you kiddo." + "\n")
+  time_pause(med_pause)
+  einhar_text("Which tier ya wanna enter?" + "\n" + "\n")
+  time_pause(short_pause)
+
+
+
+#08 - Travel
+
+  #08.1 - Hub Set Up
+def return_to_hub(player):
+  player.kill_count_bonus = 0
+  global first_time_hub
+  if first_time_hub == True:
+    first_time_hub = False
+    anastasiya_text("Welcome home " + player.name + "."+ "\n")
+    time_pause(med_pause)
+    anastasiya_text("There's not much left here after all the heroes came through." + "\n")
+    time_pause(med_pause)
+    anastasiya_text("And most everyone has left by now." + "\n")
+    time_pause(med_pause)
+    anastasiya_text("But I was hoping that if I could bring you back." + "\n")
+    time_pause(med_pause)
+    anastasiya_text("We could return this place to how it use to be." + "\n")
+    time_pause(long_pause)
+    anastasiya_text("What do you say, " + player.name + "?" + "\n")
+    time_pause(med_pause)
+    print "(1 = Yes or 2 = No)"
+    player_input_text("ENTER YOUR CHOICE: ")
+    choice = raw_input()
+    if choice == "1":
+      anastasiya_text("Oh how wonderful!" + "\n")
+      time_pause(med_pause)
+      anastasiya_text("I knew I could count on you friend!" + "\n")
+      time_pause(med_pause)
+      anastasiya_text("First we need to get our name out there." + "\n")
+      time_pause(med_pause)
+      anastasiya_text("You should head out to the arena." + "\n" + "\n")
+      time_pause(med_pause)
+    elif choice == "2":
+      anastasiya_text("Well, I can't say that I am not disapointed..." + "\n")
+      time_pause(med_pause)
+      anastasiya_text("But I understand." + "\n")
+      time_pause(med_pause)
+      anastasiya_text("So long my friend." + "\n")
+      time_pause(med_pause)
+      sys.exit()
+    time_pause(med_pause)
+    hub.at_hub = True
+    time_pause(med_pause)
+    hub_action(player)
+  elif hub.at_hub == False:
+    narrative_text("You return to a familiar place." +"\n")
+    hub.at_hub = True
+    time_pause(med_pause)
+    hub_action(player)
+  elif hub.at_hub ==True:
+    time_pause(short_pause)
+    narrative_text ("\n")
+    hub_action(player)
+
+def hub_action(player):
+  narrative_text("What would you like to do?" +"\n")
+  time_pause(med_pause)
+  print "1 = Travel - 2 = Talk - 3 = Rest - 4 = Check Stats - 5 = Save Game - 6 = Check Appearance - 7 = End Game"
+  player_input_text("ENTER YOUR CHOICE: ")
+  choice = raw_input()
+  if choice.lower() == "travel" or choice == "1":
+    travel_from_hub(player)
+  elif choice.lower() == "talk" or choice == "2":
+    talk_to_hub_npc(player)
+    hub_action(player)
+  elif choice.lower() == "rest" or choice == "3":
+    player.toughness = player.max_toughness
+    narrative_text("You drift away...")
+    ##Blank Screen##
+    print "\n"
+    time_pause(short_pause)
+    print "\n"
+    time_pause(short_pause)
+    print "\n"
+    time_pause(short_pause)
+    print "\n"
+    time_pause(short_pause)
+    print "\n"
+    time_pause(short_pause)
+    print "\n"
+    time_pause(short_pause)
+    print "\n"
+    time_pause(short_pause)
+    print "\n"
+    time_pause(short_pause)
+    print "\n"
+    time_pause(short_pause)
+    print "\n"
+    time_pause(short_pause)
+    print "\n"
+    time_pause(short_pause)
+    return_to_hub(player)
+  elif choice.lower() == "check stats" or choice == "4":
+    recite_stats(player)
+    print "\n"
+    time_pause(short_pause)
+    hub_action(player)
+  elif choice.lower() == "save game" or choice == "5":
+    """ player_input_text("ENTER SAVE NAME: ")
+    save_file_name = raw_input()
+    pickle_out = open(save_file_name, "wb")
+    pickle.dump(player, pickle_out)
+    pickle_out.close()
+    print "saved!"
+    return_to_hub(player) """
+    print "Currently unavailable!"
+  elif choice.lower() == "load game" or choice == "6":
+    """print "\n"
+    time_pause(short_pause)
+    recite_appearance(player_traits)
+    print "\n"
+    time_pause(short_pause)
+    hub_action(player)
+    return_to_hub(player)"""
+    print "Currently unavailable!"
+  elif choice.lower() == "end game" or choice == "7":
+    sys.exit()
+  else:
+    narrative_text("You must choose." + "\n" + "\n")
+    hub_action(player)
+    print "\n"
+    time_pause(short_pause)
+    hub_action(player)
+def talk_to_hub_npc(player):
+  narrative_text("Who do you with to speak with?" +"\n")
+  time_pause(med_pause)
+  print "1 = Anastasiya"
+  player_input_text("ENTER YOUR CHOICE: ")
+  choice = raw_input()
+  if choice.lower() == "1":
+    anastasiya_text("Oh?" + "\n")
+    time_pause(med_pause)
+    anastasiya_text("Hello " + player.name + "." + "\n")
+    time_pause(med_pause)
+    anastasiya_text("Could you come back later?" + "\n")
+    time_pause(med_pause)
+    anastasiya_text("I'm bit busy now." + "\n")
+    time_pause(med_pause)
+    return_to_hub(player)
+
+
+
+def travel_from_hub(player):
+  narrative_text("Where would you like to go?" + "\n")
+  time_pause(med_pause)
+  print "1 = Arena, 2 = Return to Hub"
+  player_input_text("ENTER YOUR CHOICE: ")
+  choice = raw_input()
+  if choice.lower() == "1" or choice.lower() == "arena":
+      hub.at_hub = False
+      print "\n"
+      travel_to_arena(player)
+  if choice.lower() == "2" or choice.lower() == "return to hub":
+    return_to_hub(player)
+  else:
+    narrative_text("You must choose." + "\n" + "\n")
+    travel_from_hub
+
+
+########Arena Set Up########
+  ########Arena Fights by Tier########
+    ########Define Tier1 battle########
+def arena_tier1(player):
+  battle(player, slime)
+  arena_tier1_loop(player)
+      ########Define Tier 1 post battle loop########
+def arena_tier1_loop(player):
+  narrative_text("Do you wish to fight again?" + "\n")
+  print "(1 = Yes or 2 = No)"
+  player_input_text("ENTER YOUR CHOICE: ")
+  choice = raw_input()
+  if choice.lower() == "yes" or choice == "1":
+    print "\n"
+    time_pause(short_pause)
+    arena_tier1(player)
+  elif choice.lower() == "no" or choice == "2":
+    player.exp_bonus += round((player.kill_count_bonus / 25.0), 2)
+    if player.exp_bonus > 1:
+      narrative_text("Your exp bonus is now " + str(player.exp_bonus) + "." + "\n")
+      time_pause(short_pause)
+    narrative_text("You are leaving the arena." + "\n" + "\n")
+    time_pause(med_pause)
+    travel_from_arena(player)
+  else:
+    narrative_text("You must choose." + "\n" + "\n")
+    arena_tier1_loop(player)
+
+    ########Define tier2 battle########
+def arena_tier2(player):
+  battle(player, tier2_monster_select(giant_slime,skeleton))
+  arena_tier2_loop(player)
+      ########Define Tier 2 post battle loop########
+def arena_tier2_loop(player):
+  narrative_text("Do you wish to fight again?" + "\n")
+  print "(1 = Yes or 2 = No)"
+  player_input_text("ENTER YOUR CHOICE: ")
+  choice = raw_input()
+  if choice.lower() == "yes" or choice == "1":
+    print "\n"
+    time_pause(short_pause)
+    arena_tier2(player)
+  elif choice.lower() == "no" or choice == "2":
+    player.exp_bonus += round((player.kill_count_bonus / 25.0), 2)
+    if player.exp_bonus > 1:
+      narrative_text("Your exp bonus is now " + str(player.exp_bonus) + "." + "\n")
+      time_pause(short_pause)
+    narrative_text("You are leaving the arena." + "\n" + "\n")
+    time_pause(med_pause)
+    travel_from_arena(player)
+  else:
+    narrative_text("You must choose." + "\n" + "\n")
+    arena_tier2_loop(player)
+
+    ########Define tier3 battle########
+def arena_tier3(player):
+  battle(player, tier3_monster_select(goblin,zombie))
+  arena_tier3_loop(player)
+      ########Define Tier 3 post battle loop########
+def arena_tier3_loop(player):
+  narrative_text("Do you wish to fight again?" + "\n")
+  print "(1 = Yes or 2 = No)"
+  player_input_text("ENTER YOUR CHOICE: ")
+  choice = raw_input()
+  if choice.lower() == "yes" or choice == "1":
+    print "\n"
+    time_pause(short_pause)
+    arena_tier3(player)
+  elif choice.lower() == "no" or choice == "2":
+    player.exp_bonus += round((player.kill_count_bonus / 25.0), 2)
+    if player.exp_bonus > 1:
+      narrative_text("Your exp bonus is now " + str(player.exp_bonus) + "." + "\n")
+      time_pause(short_pause)
+    narrative_text("You are leaving the arena." + "\n" + "\n")
+    time_pause(med_pause)
+    travel_from_arena(player)
+  else:
+    narrative_text("You must choose." + "\n" + "\n")
+    arena_tier3_loop(player)
+
+
+
+
+########Travel to Arena########
+def travel_to_arena(player):
+  narrative_text("You find your way into the arena." +"\n" + "\n")
+  time_pause(short_pause)
+  if arena.in_arena == False:
+    if arena.arena_first_visit == True:
+      first_time_at_arena()
+    else:
+      greeting = random.randrange(0,2)
+      if greeting == 0:
+        einhar_text("Heya kiddo!" + "\n")
+        time_pause(short_pause)
+      else:
+        einhar_text("Heya " +  player.name + "!" + "\n")
+        time_pause(short_pause)
+      einhar_text("Which tier today?" + "\n")
+      time_pause(short_pause)
+  else:
+    einhar_text("Heyo!" + "\n")
+    time_pause(short_pause)
+    einhar_text("You're back already!" + "\n")
+    time_pause(short_pause)
+    einhar_text("Which tier ya feel like?" + "\n")
+  arena.in_arena = True
+  print  "(0 = Leave - 1 = Tier1 - 2 = Tier2 - 3 = Tier3)"
+  player_input_text("ENTER YOUR CHOICE: ")
+  choice = raw_input()
+  if choice.lower == "leave" or choice == "0":
+    einhar_text("Well alrighty then." + "\n")
+    time_pause(short_pause)
+    einhar_text("Got my hopes up too..." + "\n" + "\n")
+    time_pause(short_pause)
+    travel_from_arena(player)
+  elif choice.lower == "tier1" or choice == "1":
+    print "\n"
+    arena_tier1(player)
+  elif choice.lower == "tier2" or choice == "2":
+    print "\n"
+    arena_tier2(player)
+  elif choice.lower == "tier3" or choice == "3":
+    print "\n"
+    arena_tier3(player)
+  elif choice == "4":
+    einhar_text("Sorry friendo!" + "\n")
+    time_pause(short_pause)
+    einhar_text("That tier ain't available yet!" + "\n" + "\n")
+    time_pause(short_pause)
+    arena_options(player)
+  else:
+    einhar_text("..." + "\n")
+    time_pause(short_pause)
+    einhar_text("You've gotta know that ain't an option right?" + "\n" + "\n")
+    time_pause(long_pause)
+    arena_options(player)
+
+
+def arena_options(player):
+  einhar_text("Please choose a tier!" + "\n")
+  print  "1 = Tier1 - 2 = Tier2"
+  player_input_text("ENTER YOUR CHOICE: ")
+  choice = raw_input()
+  if choice.lower == "Tier1" or choice == "1":
+    print "\n"
+    arena_tier1(player)
+  elif choice.lower == "Tier2" or choice == "2":
+    print "\n"
+    arena_tier2(player)
+  elif choice.lower == "Tier3" or choice == "3":
+    print "\n"
+    arena_tier3(player)
+  elif choice == "4":
+    einhar_text("Sorry friendo!" + "\n")
+    time_pause(short_pause)
+    einhar_text("That tier ain't available yet!" + "\n" + "\n")
+    time_pause(short_pause)
+    arena_options(player)
+  else:
+    einhar_text("..." + "\n")
+    time_pause(short_pause)
+    einhar_text("You've gotta know that ain't an option right?" + "\n" + "\n")
+    time_pause(long_pause)
+    arena_options(player)
+
+
+########Travel from Arena
+def travel_from_arena(player):
+  narrative_text("Where would you like to go?" + "\n")
+  time_pause(med_pause)
+  print  "1 = Return to Arena - 2 = Travel to Hub"
+  player_input_text("ENTER YOUR CHOICE: ")
+  choice = raw_input()
+  if choice == "1" or choice.lower() == "arena":
+      narrative_text("Returning to the arena." + "\n" + "\n")
+      travel_to_arena(player)
+  elif choice == "2" or choice.lower() == "travel to hub":
+    arena.in_arena = False
+    print "\n"
+    return_to_hub(player)
+
+
+  else:
+    narrative_text("You must choose." + "\n" + "\n")
+    travel_from_hub
+
+
+
+
+########Testing Functions########
+def player_op(player):
+  player.char_class = "OP"
+  player.attack = 15
+  player.speed = 100
+  player.toughness = 20
+  player.max_toughness = 20
+  player.weapon_name = "Swords"
+  player.weapon_damage = swords
+
+########Start Game
+character_creation(player)
+#player_op(player)
+return_to_hub(player)
